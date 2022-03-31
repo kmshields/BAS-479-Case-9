@@ -1,0 +1,141 @@
+---
+title: "Case 9 - Kendall Shields and Blake Curtisnger"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp3)
+library(tidyr)
+library(outliers)
+library(EnvStats)
+
+
+```
+
+## R Markdown
+
+```{r}
+SAMPLE <- read.csv("Case9RandomSample.csv")
+```
+
+#Metadata
+```{r}
+# Resp – Whether the person bought last year (1=Yes)
+#  Zlabel – Customer account number
+#  Age__grp – Whether kids in various age groups are in the household
+#  Avg12 – Average $ purchase the last 12 months
+#  Class – Variable from a Cluster analysis
+#  Age – Age of customer
+#  ____012 – Data on purchase with other companies
+#  Gender – M/F
+#  HHI – Household income
+#  Homeown – Does the customer own their home?
+#  Item___ - various variables about number of items 
+# purchased
+#  JanFeb – 6 pairs of months indicating whether purchases 
+# have been made in those months in the past
+#  LastCat – The category of their last purchase
+#  RFM – Industry standard number reflecting;
+#     Recency of purchase
+#     Frequency of purchase
+#     Money (amount) of purchases
+```
+
+
+```{r}
+table(SAMPLE$Age)
+quantile(SAMPLE$Age, na.rm = TRUE)
+
+
+```
+
+
+
+
+#Data Cleaning
+
+```{r}
+#Check how the software coded the variables
+class(SAMPLE$Actual)
+class(SAMPLE$Age)
+class(SAMPLE$CustomOrders)
+
+#To change a variable from an integer to a character
+SAMPLE$Code1 <- as.character(SAMPLE$Code1)
+
+#To exclude the seventh variable
+NewSamplea <- SAMPLE[,c(-7)]
+#or to exclude all but these 5
+NewSampleb <- subset(SAMPLE, select=c(Actual, Age, gender, LastMail, ZLabel))
+  
+#Checking for missing values: This will show all the rows of data that contain a NA  
+Missing <- SAMPLE[!complete.cases(SAMPLE),]
+Missing
+
+Missing <- SAMPLE[which(is.na(SAMPLE)),]
+#To omit rows with NAs in certain columns
+OmitSAMPLE <- SAMPLE %>% drop_na(Age)
+OmitSAMPLE <- SAMPLE %>% drop_na(c(Age, items, LastMail))
+
+#To detect outliers visually
+hist(SAMPLE$PurcPower)
+boxplot(SAMPLE$PurcPower)
+boxplot.stats(SAMPLE$PurchPower)$out
+
+#this method will test the highest value as an outlier 
+test <- grubbs.test(SAMPLE$PurcPower)
+test
+
+#this method will test for all potential outliers
+#no outliers here
+test2 <- rosnerTest(OmitSAMPLE$Age, k = 3)
+test2
+
+#many outliers in this variable
+test3 <- rosnerTest(SAMPLE$TotPurch, k = 15)
+test3
+
+```
+
+
+
+```{r}
+SAMPLE <- SAMPLE[,c(-15)]
+
+summary(SAMPLE$Age)
+summary(SAMPLE$NumOrder)
+table(SAMPLE$maritalgrp)
+
+mean(SAMPLE$Actual)
+
+summary(SAMPLE$ordsize) #remove
+96001/100000
+
+summary(SAMPLE$explastord) #remove
+
+summary(SAMPLE$Oth3LastOrd) #remove
+85778/100000
+
+summary(SAMPLE$Oth4Lastord)#remove
+84510/100000
+
+summary(SAMPLE$Oth4Dolr) #this is WAY off - remove 
+
+tail(table(SAMPLE$Oth2Dolr)) #h48 values that are super high
+boxplot(SAMPLE$Oth2Dolr)
+
+summary(SAMPLE$ProdCatA) #lots of zeros
+table(SAMPLE$ProdCatA)
+
+summary(SAMPLE$ProdCatB) 
+
+summary(SAMPLE$Oth3LastOrd)
+
+
+```
+
+```{r}
+cor(SAMPLE)
+```
+
