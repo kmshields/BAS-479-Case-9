@@ -187,7 +187,7 @@ corrplot(mycor)
 
 # TotPurch is fairly strongly correlated with offdolr_12, offord_24, and NumOrder. Also moderately correlated with q1, q2, q3, and q4.
 
-#I would definitely remove either HHI or PurcPower given their very strong correlation. Additionally, either Items or Item_12 should be removed given that they represent the same thing. A decision should be made to decide whether or not to keep TotPurch, Offdolr_12, offord_25, or NumOrder. They have fairly strong correlations, but they may still be worth keeping. I would keep Q1-4.
+#I would definitely remove either HHI or PurcPower given their very strong correlation. Additionally, either Items or Item_12 should be removed given that they represent the same thing. I would remove offord_24 and NumOrder given that they have a fairly strong correlation with TotPurch. However, I would keep Q1-4.
 
 
 ```
