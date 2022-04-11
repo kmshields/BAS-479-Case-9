@@ -1,5 +1,5 @@
 ---
-title: "Case 9 - Kendall Shields and Blake Curtisnger"
+title: "Case 9 - Kendall Shields, Blake Curtsinger, Sam Owens"
 output: html_document
 ---
 
@@ -9,8 +9,9 @@ library(fpp3)
 library(tidyr)
 library(outliers)
 library(EnvStats)
-
-
+library(corrplot)
+library(regclass)
+library(rstatix)
 ```
 
 ## R Markdown
@@ -135,7 +136,260 @@ summary(SAMPLE$Oth3LastOrd)
 
 ```
 
+
+Checking Variables for Multicollinearity - Blake
 ```{r}
-cor(SAMPLE)
+#Load in the new sample
+SAMPLE2 <- read.csv("9.13 C9 Random Sample v1.91.csv")
+attach(SAMPLE2)
+#Which continuous variables have 0 NA?
+summary(Age) #No
+summary(Age1) #Yes
+summary(Age2) #Yes
+summary(Age3) #Yes
+summary(canorders) #Yes
+summary(Code1) #Yes
+summary(Code2) #Yes
+summary(CustomOrders) #Yes
+summary(HHI) #Yes
+summary(item_12) #Yes
+summary(items) #Yes
+summary(LastMail) #No
+summary(monthfrstord) #No
+summary(monthlastord) #No
+summary(NumOrder) #Yes
+summary(offdolr_12) #Yes
+summary(offord_12) #Yes
+summary(offord_24) #Yes
+summary(PurcPower) #Yes
+summary(Q1) #Yes
+summary(Q2)  #Yes
+summary(Q3) #Yes
+summary(Q4) #Yes
+summary(retitem_12) #Yes
+summary(TotPurch) #Yes
+summary(webdolr) #Yes
+summary(WebUse) #No
+
+#subset continuous variables
+SAMPLEcont <- SAMPLE2[, c("Age1", "Age2", "Age3", "canorders", "Code1", "Code2", "CustomOrders", "HHI", "item_12", "items", "NumOrder", "offdolr_12", "offord_24", "PurcPower", "Q1", "Q2", "Q3", "Q4", "retitem_12", "TotPurch", "webdolr")]
+
+#Check correlations
+mycor <- cor(SAMPLEcont)
+mycor
+corrplot(mycor)
+
+
+#What variables are correlated
+# PurcPower and HHI are very strongly correlated
+
+# Items and Item_12 have a strong correlation. According to the data dictionary, these variables literally represent the same thing so one should be removed. I'm surprised there's not a 100% correlation.
+
+# TotPurch is fairly strongly correlated with offdolr_12, offord_24, and NumOrder. Also moderately correlated with q1, q2, q3, and q4.
+
+#I would definitely remove either HHI or PurcPower given their very strong correlation. Additionally, either Items or Item_12 should be removed given that they represent the same thing. A decision should be made to decide whether or not to keep TotPurch, Offdolr_12, offord_25, or NumOrder. They have fairly strong correlations, but they may still be worth keeping. I would keep Q1-4.
+
+
+```
+
+
+
+Find Outliers - Blake (Second Half of the Variables)
+```{r}
+#Skewed Variables are transformed via log transformation before outliers are found.
+
+#Subset second-half of variables
+OutSample <- SAMPLE2[,32:62]
+
+#offdolr_12
+hist(OutSample$offdolr_12)
+summary(log(OutSample$offdolr_12+1))
+hist(log(OutSample$offdolr_12+1))
+qq(log(OutSample$offdolr_12+1))
+boxplot(log(OutSample$offdolr_12+1))
+rosnerTest(log(OutSample$offdolr_12+1))
+#Rows with potential outliers
+NULL
+
+#offord_12
+hist(OutSample$offord_12)
+summary(log(OutSample$offord_12+1))
+hist(log(OutSample$offord_12+1))
+qq(log(OutSample$offord_12+1))
+boxplot(log(OutSample$offord_12+1))
+rosnerTest(log(OutSample$offord_12+1), k = 6)
+#Rows with potential outliers
+
+
+#offord_24
+hist(OutSample$offord_24)
+summary(log(OutSample$offord_24+1))
+hist(log(OutSample$offord_24+1))
+qq(log(OutSample$offord_24+1))
+boxplot(log(OutSample$offord_24+1))
+rosnerTest(log(OutSample$offord_24+1), k = 6)
+#Rows with potential outliers
+OutSample[c(156, 368, 4772, 5772, 7342, 7795),]
+
+#Oth1Dolr
+hist(OutSample$Oth1Dolr)
+summary(log(OutSample$Oth1Dolr+1))
+hist(log(OutSample$Oth1Dolr+1))
+qq(log(OutSample$Oth1Dolr+1))
+boxplot(log(OutSample$Oth1Dolr+1))
+rosnerTest(log(OutSample$Oth1Dolr+1), k = 6)
+#Rows with potential outliers
+NULL
+
+#Oth1Orders
+hist(OutSample$Oth1Orders)
+summary(log(OutSample$Oth1Orders+1))
+hist(log(OutSample$Oth1Orders+1))
+qq(log(OutSample$Oth1Orders+1))
+boxplot(log(OutSample$Oth1Orders+1))
+rosnerTest(log(OutSample$Oth1Orders+1), k = 10)
+#Rows with potential outliers
+OutSample[c(7803, 8724, 12009, 12510),]
+
+#Oth2Dolr
+hist(OutSample$Oth2Dolr)
+summary(log(OutSample$Oth2Dolr+1))
+hist(log(OutSample$Oth2Dolr+1))
+qq(log(OutSample$Oth2Dolr+1))
+boxplot(log(OutSample$Oth2Dolr+1))
+rosnerTest(log(OutSample$Oth2Dolr+1), k = 10)
+#Rows with potential outliers
+OutSample[c(7803, 8724, 12009, 12510),]
+
+
+#Oth2Orders
+hist(OutSample$Oth2Orders)
+summary(log(OutSample$Oth2Orders+1))
+hist(log(OutSample$Oth2Orders+1))
+qq(log(OutSample$Oth2Orders+1))
+boxplot(log(OutSample$Oth2Orders+1))
+rosnerTest(log(OutSample$Oth2Orders+1), k = 10)
+#Rows with potential outliers
+OutSample[c(7803, 8724, 12009, 12510),]
+
+#Oth3Dolr
+hist(OutSample$Oth3Dolr)
+summary(log(OutSample$Oth3Dolr+1))
+hist(log(OutSample$Oth3Dolr+1))
+qq(log(OutSample$Oth3Dolr+1))
+boxplot(log(OutSample$Oth3Dolr+1))
+rosnerTest(log(OutSample$Oth3Dolr+1), k = 10)
+#Rows with potential outliers
+NULL
+
+#Oth4Dolr
+hist(OutSample$Oth4Dolr)
+summary(log(OutSample$Oth4Dolr+1))
+hist(log(OutSample$Oth4Dolr+1))
+qq(log(OutSample$Oth4Dolr+1))
+boxplot(log(OutSample$Oth4Dolr+1))
+rosnerTest(log(OutSample$Oth4Dolr+1), k = 10)
+#Rows with potential outliers
+OutSample[c(13584, 32790, 46675),]
+
+#Oth4Orders
+hist(OutSample$Oth4Orders)
+summary(log(OutSample$Oth4Orders+1))
+hist(log(OutSample$Oth4Orders+1))
+qq(log(OutSample$Oth4Orders+1))
+boxplot(log(OutSample$Oth4Orders+1))
+rosnerTest(log(OutSample$Oth4Orders+1), k = 10)
+#Rows with potential outliers
+OutSample[c(7803, 8724, 12009, 12510),]
+
+#PurcPower
+hist(OutSample$PurcPower)
+summary(log(OutSample$PurcPower))
+hist(log(OutSample$PurcPower))
+qq(log(OutSample$PurcPower))
+boxplot(log(OutSample$PurcPower))
+rosnerTest(log(OutSample$PurcPower), k = 10)
+#Rows with potential outliers
+NULL
+
+#Q1
+summary(OutSample$Q1)
+hist(OutSample$Q1)
+summary(log(OutSample$Q1+1))
+hist(log(OutSample$Q1+1))
+qq(log(OutSample$Q1+1))
+boxplot(log(OutSample$Q1+1))
+rosnerTest(log(OutSample$Q1+1), k = 10)
+#Rows with potential outliers
+OutSample[c(30401, 91854, 1094),]
+
+#Q2
+summary(OutSample$Q2)
+hist(OutSample$Q2)
+summary(log(OutSample$Q2+1))
+hist(log(OutSample$Q2+1))
+qq(log(OutSample$Q2+1))
+boxplot(log(OutSample$Q2+1))
+rosnerTest(log(OutSample$Q2+1), k = 10)
+#Rows with potential outliers
+NULL
+
+#Q3
+summary(OutSample$Q3)
+hist(OutSample$Q3)
+summary(log(OutSample$Q3+1))
+hist(log(OutSample$Q3+1))
+qq(log(OutSample$Q3+1))
+boxplot(log(OutSample$Q3+1))
+rosnerTest(log(OutSample$Q3+1), k = 10)
+#Rows with potential outliers
+OutSample[c(84264, 45736, 40791),]
+
+#Q4
+summary(OutSample$Q4)
+hist(OutSample$Q4)
+summary(log(OutSample$Q4+1))
+hist(log(OutSample$Q4+1))
+qq(log(OutSample$Q4+1))
+boxplot(log(OutSample$Q4+1))
+rosnerTest(log(OutSample$Q4+1), k = 10)
+#Rows with potential outliers
+NULL
+
+#retitem_12
+summary(OutSample$retitem_12)
+hist(OutSample$retitem_12)
+summary(log(OutSample$retitem_12+1))
+hist(log(OutSample$retitem_12+1))
+qq(log(OutSample$retitem_12+1))
+boxplot(log(OutSample$retitem_12+1))
+rosnerTest(log(OutSample$retitem_12+1), k = 10)
+#Rows with potential outliers
+OutSample[c(39846, 73023, 78808),]
+
+#TotPurch
+summary(OutSample$TotPurch)
+hist(OutSample$TotPurch)
+summary(log(OutSample$TotPurch+1))
+hist(log(OutSample$TotPurch+1))
+qq(log(OutSample$TotPurch+1))
+boxplot(log(OutSample$TotPurch+1))
+rosnerTest(log(OutSample$TotPurch+1), k = 10)
+#Rows with potential outliers
+NULL
+
+#webdolr
+summary(OutSample$webdolr)
+hist(OutSample$webdolr)
+summary(log(OutSample$webdolr+1))
+hist(log(OutSample$webdolr+1))
+qq(log(OutSample$webdolr+1))
+boxplot(log(OutSample$webdolr+1))
+rosnerTest(log(OutSample$webdolr+1), k = 10)
+#Rows with potential outliers
+OutSample[c(79815, 90872, 8321, 81621),]
+
+
+RowsWithOutliers <- SAMPLE2[c(156, 368, 4772, 5772, 7342, 7795, 7803, 8724, 12009, 12510, 13584, 32790, 46675, 30401, 91854, 1094, 84264, 45736, 40791, 39846, 73023, 78808, 79815, 90872, 8321, 81621),]
 ```
 
