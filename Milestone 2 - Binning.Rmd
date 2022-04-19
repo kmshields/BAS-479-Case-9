@@ -7,22 +7,71 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
-summary(cars)
+SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
+library(dplyr)
+
+
+summary(SAMPLE$LastMail)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+
+
+ProdCatB_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatB)) {
+  if (is.na(SAMPLE$ProdCatB[i])) {ProdCatB_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatB[i] <= 100) {ProdCatB_Bin[i] <- 1}
+   if (SAMPLE$ProdCatB[i] > 100) {ProdCatB_Bin[i] <- 2} }
+}
+
+
+ProdCatC_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatC)) {
+  if (is.na(SAMPLE$ProdCatC[i])) {ProdCatC_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatC[i] <= 100) {ProdCatC_Bin[i] <- 1}
+   if (SAMPLE$ProdCatC[i] > 100) {ProdCatC_Bin[i] <- 2} }
+}
+
+ProdCatB_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatB)) {
+  if (is.na(SAMPLE$ProdCatB[i])) {ProdCatB_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatB[i] <= 100) {ProdCatB_Bin[i] <- 1}
+   if (SAMPLE$ProdCatB[i] > 100) {ProdCatB_Bin[i] <- 2} }
+}
+
+ProdCatD_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatD)) {
+  if (is.na(SAMPLE$ProdCatD[i])) {ProdCatD_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatD[i] <= 100) {ProdCatD_Bin[i] <- 1}
+   if (SAMPLE$ProdCatD[i] > 100) {ProdCatD_Bin[i] <- 2} }
+}
+
+
+ProdCatE_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatE)) {
+  if (is.na(SAMPLE$ProdCatE[i])) {ProdCatE_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatE[i] <= 100) {ProdCatE_Bin[i] <- 1}
+   if (SAMPLE$ProdCatE[i] > 100) {ProdCatE_Bin[i] <- 2} }
+}
+
+canordersBin <- c()
+for (i in 1:length(SAMPLE$canorders)) {
+  if (SAMPLE$canorders[i] == 0) {canordersBin[i] <- 0} else {
+   canordersBin[i] <- 1 }
+}
+
+webuseBin <- c()
+for (i in 1:length(SAMPLE$WebUse)) {
+  if (SAMPLE$WebUse[i] == 0 | is.na(SAMPLE$WebUse[i])) {webuseBin[i] <- 0} else {
+   webuseBin[i] <- 1 }
+}
+
+SAMPLE <- cbind(SAMPLE, ProdCatB_Bin, ProdCatC_Bin, ProdCatD_Bin, ProdCatE_Bin, canordersBin, webuseBin)
+
+SAMPLE <- subset(SAMPLE, select = -c(ProdCatB, ProdCatC, ProdCatD, ProdCatE, WebUse, canorders) )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
