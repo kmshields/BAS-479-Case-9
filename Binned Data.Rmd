@@ -115,5 +115,19 @@ SAMPLE <- cbind(SAMPLE, LastMailBins, monthfrstordbin, monthlastordbin)
 SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
 
 SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
+
+
+RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+
+
+SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+
+AgeRegression <- lm(Age~Age1+Age2+Age3+AgeCode, data=SAMPLE)
+AgeRegression
+FinalAge <- c()
+for(i in 1:length(SAMPLE$Age)){
+  if(is.na(SAMPLE$Age[i])){ FinalAge[i] <- Age #add in here}
+  else{FinalAge[i] <- SAMPLE$Age[i]}
+}
 ```
 
