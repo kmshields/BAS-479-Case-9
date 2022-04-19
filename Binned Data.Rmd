@@ -78,6 +78,42 @@ SAMPLE$Age <-
 ```
 
 ```{r}
+LastMailBins <- c()
+for (i in 1:length(SAMPLE$LastMail)) {
+  if (is.na(SAMPLE$LastMail[i])) {LastMailBins[i] <- 6} else {
+   if (SAMPLE$LastMail[i] <= 6) {LastMailBins[i] <- 1}
+   if (SAMPLE$LastMail[i] <= 12) {LastMailBins[i] <- 2}
+     if (SAMPLE$LastMail[i] <= 18) {LastMailBins[i] <- 3} 
+     if (SAMPLE$LastMail[i] <= 24) {LastMailBins[i] <- 4} 
+     if (SAMPLE$LastMail[i] <= 30) {LastMailBins[i] <- 5} }
+}
 
+monthfrstordbin <- c()
+for (i in 1:length(SAMPLE$monthfrstord)) {
+  if (is.na(SAMPLE$monthfrstord[i])) {monthfrstordbin[i] <- 6} else {
+   if (SAMPLE$monthfrstord[i] <= 6) {monthfrstordbin[i] <- 1}
+   if (SAMPLE$monthfrstord[i] <= 12) {monthfrstordbin[i] <- 2}
+     if (SAMPLE$monthfrstord[i] <= 18) {monthfrstordbin[i] <- 3} 
+     if (SAMPLE$monthfrstord[i] <= 24) {monthfrstordbin[i] <- 4} 
+     if (SAMPLE$monthfrstord[i] <= 30) {monthfrstordbin[i] <- 5} }
+}
+
+monthlastordbin <- c()
+for (i in 1:length(SAMPLE$monthlastord)) {
+  if (is.na(SAMPLE$monthlastord[i])) {monthlastordbin[i] <- 6} else {
+   if (SAMPLE$monthlastord[i] <= 6) {monthlastordbin[i] <- 1}
+   if (SAMPLE$monthlastord[i] <= 12) {monthlastordbin[i] <- 2}
+     if (SAMPLE$monthlastord[i] <= 18) {monthlastordbin[i] <- 3} 
+     if (SAMPLE$monthlastord[i] <= 24) {monthlastordbin[i] <- 4} 
+     if (SAMPLE$monthlastord[i] <= 30) {monthlastordbin[i] <- 5} }
+}
+
+
+
+SAMPLE <- cbind(SAMPLE, LastMailBins, monthfrstordbin, monthlastordbin)
+
+SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
+
+SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
 ```
 
