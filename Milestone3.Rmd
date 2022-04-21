@@ -153,3 +153,47 @@ Decision Tree Model
 
 ```
 
+
+Kendall's Work
+```{r}
+library(caret)
+library(gbm)
+library(pROC)
+data("SAMPLE")
+
+for(i in 1:length(SAMPLE2.1$Resp)){
+  
+  if(SAMPLE2.1$Resp[i] == 0){SAMPLE2.1$Resp[i] <- "No"}
+  else
+    if(SAMPLE2.1$Resp[i] == 1) {SAMPLE2.1$Resp[i] <- "Yes"}
+}
+
+SAMPLE2.1$Resp <- as.factor(SAMPLE2.1$Resp)
+train.rows <- sample(nrow(SAMPLE2.1),20000)
+TRAIN <- SAMPLE2.1[train.rows,]
+HOLDOUT <- SAMPLE2.1[-train.rows,]
+
+fitcontrol <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
+summary(fitcontrol)
+
+LRM <- train(Resp~., data=TRAIN,method="glm",
+               trcontrol=fitcontrol, preProc=c("center", "scale"))
+
+LRM$results[rownames(LRM$bestTune),]
+
+mean(PURCHASE_HOLDOUT$Purchase == predict(LRM,newdata=PURCHASE_HOLDOUT) )
+
+roc(PURCHASE_HOLDOUT$Purchase,predict(LRM,newdata=PURCHASE_HOLDOUT,type="prob")[,2])  
+
+varImp(LRM)
+plot(varImp(LRM), top =10, xlim = c(0,100), main = "Variable Importance for LRM")
+
+BEST.PARAMS.2$LRM <- LRM$results[rownames(LRM$bestTune),]
+
+BEST.PARAMS.2$LRM <- LRM$results[rownames(LRM$bestTune),][,2]
+BEST.PARAMS.2H$LRM <- 0.625  
+BEST.PARAMS.2SD$LRM <- LRM$results[rownames(LRM$bestTune),][,5]
+BEST.PARAMS.2Sensitivity$LRM <- LRM$results[rownames(LRM$bestTune),][,3]
+BEST.PARAMS.2SSpecificity$LRM <- LRM$results[rownames(LRM$bestTune),][,4]
+```
+
