@@ -131,11 +131,17 @@ summary(SAMPLE$Oth3LastOrd)
 
 ```
 
+Milestone 2
 
-Checking Variables for Multicollinearity - Blake
+Load in the Milestone 2 sample
 ```{r}
 #Load in the new sample
 SAMPLE2 <- read.csv("9.13 C9 Random Sample v1.91.csv")
+```
+
+
+Checking Variables for Multicollinearity - Blake
+```{r}
 attach(SAMPLE2)
 #Which continuous variables have 0 NA?
 summary(Age) #No
@@ -190,6 +196,7 @@ corrplot(mycor)
 
 
 Find Outliers - Blake (Second Half of the Variables)
+* Don't run this chunk, takes forever!
 ```{r}
 #Skewed Variables are transformed via log transformation before outliers are found.
 
@@ -383,8 +390,10 @@ boxplot(log(OutSample$webdolr+1))
 rosnerTest(log(OutSample$webdolr+1), k = 10)
 #Rows with potential outliers
 OutSample[c(79815, 90872, 8321, 81621),]
+```
 
-
+Create a new dataframe that excludes the rows with outliers.
+```{r}
 RowsWithOutliers <- SAMPLE2[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 
 
