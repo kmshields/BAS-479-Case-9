@@ -1,5 +1,5 @@
 ---
-title: "Milestone 2"
+title: "Milestone 3"
 output: html_document
 ---
 
@@ -7,7 +7,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+Read in the sample, load packages
 ```{r cars}
 SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
 library(dplyr)
@@ -17,8 +17,8 @@ summary(SAMPLE$LastMail)
 ```
 
 
-
-```{r pressure, echo=FALSE}
+Binning Pt. 1
+```{r binning, echo=FALSE}
 
 
 ProdCatB_Bin <- c()
@@ -73,10 +73,9 @@ for (i in 1:length(SAMPLE$WebUse)) {
 SAMPLE <- cbind(SAMPLE, ProdCatB_Bin, ProdCatC_Bin, ProdCatD_Bin, ProdCatE_Bin, canordersBin, webuseBin)
 
 SAMPLE <- subset(SAMPLE, select = -c(ProdCatB, ProdCatC, ProdCatD, ProdCatE, WebUse, canorders) )
-
-SAMPLE$Age <- 
 ```
 
+Binning pt.2
 ```{r}
 LastMailBins <- c()
 for (i in 1:length(SAMPLE$LastMail)) {
@@ -108,26 +107,30 @@ for (i in 1:length(SAMPLE$monthlastord)) {
      if (SAMPLE$monthlastord[i] <= 30) {monthlastordbin[i] <- 5} }
 }
 
-
-
 SAMPLE <- cbind(SAMPLE, LastMailBins, monthfrstordbin, monthlastordbin)
 
 SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
 
 SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
+```
 
-
+Exclude Rows With Outliers
+```{r}
 RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 
 
 SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+```
 
+Regression Imputation for Age
+```{r}
 AgeRegression <- lm(Age~Age1+Age2+Age3+AgeCode, data=SAMPLE)
-AgeRegression
+summary(AgeRegression)
 FinalAge <- c()
 for(i in 1:length(SAMPLE$Age)){
   if(is.na(SAMPLE$Age[i])){ FinalAge[i] <- Age #add in here}
   else{FinalAge[i] <- SAMPLE$Age[i]}
+  }
 }
 ```
 
