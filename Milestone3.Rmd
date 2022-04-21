@@ -11,7 +11,9 @@ Read in the sample, load packages
 ```{r cars}
 SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
 library(dplyr)
-
+library(caret)
+library(regclass)
+library(missForest) 
 
 summary(SAMPLE$LastMail)
 ```
@@ -122,15 +124,32 @@ RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 535
 SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 ```
 
-Regression Imputation for Age
+Random Forest Imputation for Age
 ```{r}
-AgeRegression <- lm(Age~Age1+Age2+Age3+AgeCode, data=SAMPLE)
-summary(AgeRegression)
-FinalAge <- c()
-for(i in 1:length(SAMPLE$Age)){
-  if(is.na(SAMPLE$Age[i])){ FinalAge[i] <- Age #add in here}
-  else{FinalAge[i] <- SAMPLE$Age[i]}
-  }
-}
+
+SAMPLE.MISSFORESTTEST <- data.frame(SAMPLE2.1$Age,SAMPLE2.1$Age1,SAMPLE2.1$Age2,SAMPLE2.1$Age3)
+set.seed(178); SAMPLE.MISSFOREST <- missForest(SAMPLE.MISSFORESTTEST)
+
+newdata <- SAMPLE.MISSFOREST$ximp
+
+SAMPLE2.1$FinalAge <- newdata$SAMPLE2.1.Age
+SAMPLE2.1$FinalAge <- as.integer(SAMPLE2.1$FinalAge)
+
+```
+
+Split the data into training and holdout samples (80/20 split)
+```{r}
+train.rows <- sample
+```
+
+
+Logistic Regression Model
+```{r}
+
+```
+
+Decision Tree Model
+```{r}
+
 ```
 
