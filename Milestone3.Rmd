@@ -1,5 +1,5 @@
 ---
-title: "Milestone 3"
+title: "Milestone 2"
 output: html_document
 ---
 
@@ -7,20 +7,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Read in the sample, load packages
+
 ```{r cars}
 SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
 library(dplyr)
-library(caret)
-library(regclass)
-library(missForest) 
+
 
 summary(SAMPLE$LastMail)
 ```
 
 
-Binning Pt. 1
-```{r binning, echo=FALSE}
+
+```{r pressure, echo=FALSE}
 
 
 ProdCatB_Bin <- c()
@@ -75,9 +73,10 @@ for (i in 1:length(SAMPLE$WebUse)) {
 SAMPLE <- cbind(SAMPLE, ProdCatB_Bin, ProdCatC_Bin, ProdCatD_Bin, ProdCatE_Bin, canordersBin, webuseBin)
 
 SAMPLE <- subset(SAMPLE, select = -c(ProdCatB, ProdCatC, ProdCatD, ProdCatE, WebUse, canorders) )
+
+SAMPLE$Age <- 
 ```
 
-Binning pt.2
 ```{r}
 LastMailBins <- c()
 for (i in 1:length(SAMPLE$LastMail)) {
@@ -109,48 +108,27 @@ for (i in 1:length(SAMPLE$monthlastord)) {
      if (SAMPLE$monthlastord[i] <= 30) {monthlastordbin[i] <- 5} }
 }
 
+
+
 SAMPLE <- cbind(SAMPLE, LastMailBins, monthfrstordbin, monthlastordbin)
 
 SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
 
 SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
-```
 
-Exclude Rows With Outliers
-```{r}
+
 RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 
 
 SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
-```
 
-Random Forest Imputation for Age
-```{r}
-
-SAMPLE.MISSFORESTTEST <- data.frame(SAMPLE2.1$Age,SAMPLE2.1$Age1,SAMPLE2.1$Age2,SAMPLE2.1$Age3)
-set.seed(178); SAMPLE.MISSFOREST <- missForest(SAMPLE.MISSFORESTTEST)
-
-newdata <- SAMPLE.MISSFOREST$ximp
-
-SAMPLE2.1$FinalAge <- newdata$SAMPLE2.1.Age
-SAMPLE2.1$FinalAge <- as.integer(SAMPLE2.1$FinalAge)
-
-```
-
-Split the data into training and holdout samples (80/20 split)
-```{r}
-train.rows <- sample
-```
-
-
-Logistic Regression Model
-```{r}
-
-```
-
-Decision Tree Model
-```{r}
-
+AgeRegression <- lm(Age~Age1+Age2+Age3+AgeCode, data=SAMPLE)
+AgeRegression
+FinalAge <- c()
+for(i in 1:length(SAMPLE$Age)){
+  if(is.na(SAMPLE$Age[i])){ FinalAge[i] <- Age #add in here}
+  else{FinalAge[i] <- SAMPLE$Age[i]}
+}
 ```
 
 ```{r}
@@ -168,15 +146,15 @@ for(i in 1:length(SAMPLE2.1$Resp)){
 }
 
 SAMPLE2.1$Resp <- as.factor(SAMPLE2.1$Resp)
-train.rows <- sample(nrow(SAMPLE),20000)
-TRAIN <- SAMPLE[train.rows,]
-HOLDOUT <- SAMPLE[-train.rows,]
+train.rows <- sample(nrow(SAMPLE2.1),20000)
+TRAIN <- SAMPLE2.1[train.rows,]
+HOLDOUT <- SAMPLE2.1[-train.rows,]
 
 fitcontrol <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
 summary(fitcontrol)
 
-LRM <- train(Resp~.,data=TRAIN,method="glm",
-               trcontrol=fitcontrol)
+LRM <- train(Resp~., data=TRAIN,method="glm",
+               trcontrol=fitcontrol, preProc=c("center", "scale"))
 
 LRM$results[rownames(LRM$bestTune),]
 
