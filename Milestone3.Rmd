@@ -7,14 +7,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 Read in the sample, load packages
 ```{r cars}
 SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
 library(dplyr)
 library(caret)
 library(regclass)
-library(missForest) 
-
+library(missForest)
+library(gbm)
+library(pROC)
 ```
 
 
@@ -76,6 +78,7 @@ SAMPLE <- cbind(SAMPLE, ProdCatB_Bin, ProdCatC_Bin, ProdCatD_Bin, ProdCatE_Bin, 
 SAMPLE <- subset(SAMPLE, select = -c(ProdCatB, ProdCatC, ProdCatD, ProdCatE, WebUse, canorders) )
 ```
 
+
 Binning pt.2
 ```{r}
 LastMailBins <- c()
@@ -115,63 +118,63 @@ SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
 SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
 ```
 
+
 Exclude Rows With Outliers
 ```{r}
 RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 
 
-SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+SAMPLE2 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
 ```
+
 
 Random Forest Imputation for Age
 ```{r}
 library(missForest)
-SAMPLE.MISSFORESTTEST <- data.frame(SAMPLE2.1$Age,SAMPLE2.1$Age1,SAMPLE2.1$Age2,SAMPLE2.1$Age3)
+SAMPLE.MISSFORESTTEST <- data.frame(SAMPLE2$Age,SAMPLE2$Age1,SAMPLE2$Age2,SAMPLE2$Age3)
 SAMPLE.MISSFOREST <- missForest(SAMPLE.MISSFORESTTEST)
 
 newdata <- SAMPLE.MISSFOREST$ximp
 
-SAMPLE2.1$FinalAge <- newdata$SAMPLE2.1.Age
-SAMPLE2.1$FinalAge <- as.integer(SAMPLE2.1$FinalAge)
+SAMPLE2$FinalAge <- newdata$SAMPLE2.Age
+SAMPLE2$FinalAge <- as.integer(SAMPLE2$FinalAge)
 
 ```
 
-Split the data into training and holdout samples (80/20 split)
+
+Data Cleaning - Logistic Regression Model 1
 ```{r}
-train.rows <- sample
+#Exclude Rows with zero variance and columns that were used to impute FinalAge
+table(SAMPLE2$AgeCode)
+which(SAMPLE2$AgeCode == "I")
+table(SAMPLE2$state)
+which(SAMPLE2$state == "PR")
+SAMPLE2 <- SAMPLE2[-c(39994, 75757 ,86137, 70289), -c(1, 2, 3, 4)]
+
+#Reassign Resp to be a factor so that the model will run
+SAMPLE2$Resp <- as.factor(SAMPLE2$Resp)
 ```
 
 
 Logistic Regression Model - Option 1
 ```{r}
-
-#Exclude Rows with zero variance and columns that were used to impute FinalAge
-table(SAMPLE2.1$AgeCode)
-which(SAMPLE2.1$AgeCode == "I")
-table(SAMPLE2.1$state)
-which(SAMPLE2.1$state == "PR")
-SAMPLE2.1 <- SAMPLE2.1[-c(39994, 75757 ,86137, 70289), -c(1, 2, 3, 4)]
-
-#Reassign Resp to be a factor so that the model will run
-SAMPLE2.1$Resp <- as.factor(SAMPLE2.1$Resp)
-
 #Naive model will predict the customer will not order
-table(SAMPLE2.1$Resp)
+table(SAMPLE2$Resp)
 
 #Run logistic regression model 
-MODEL <- train(Resp~.,data=SAMPLE2.1,method="glm",trControl=trainControl(method="none"))
+MODEL <- train(Resp~.,data=SAMPLE2,method="glm",trControl=trainControl(method="none"))
 summary(MODEL)
 
 #The actual data
-ACTUAL <- SAMPLE2.1$Resp 
+ACTUAL <- SAMPLE2$Resp 
 
 #Our predictions of customers who will order based on our model
-PREDICTIONS <- predict(MODEL,newdata=SAMPLE2.1,type="prob")$"1"
+PREDICTIONS <- predict(MODEL,newdata=SAMPLE2,type="prob")$"1"
 
 #This curve deviates significantly from the diagonal, indicating it is a very strong model
 plot( roc(ACTUAL,PREDICTIONS),xlab="True Negative Rate", ylab="True Positive Rate", xlim=c(1,0), ylim=c(0,1) )
 
-#The AUC is 0.85. If we picked a customer who has ordered at random and a women
+#The AUC is 0.96. If we picked a customer who has ordered at random and a women
 #who has not ordered at random, the model has an 96% chance of giving the
 #customer who ordered a higher score than the one who didn't.
 roc(ACTUAL,PREDICTIONS)$auc
@@ -179,50 +182,54 @@ roc(ACTUAL,PREDICTIONS)$auc
 ```
 
 
-
-Logistic Regression Model - Option 2
+Data Cleaning - Logistic Regression Model 2
 ```{r}
-#Prework
-library(caret)
-library(gbm)
-
-#Exclude rows with zero variance and columns that were used to impute FinalAge
-table(SAMPLE2.1$AgeCode)
-which(SAMPLE2.1$AgeCode == "I")
-table(SAMPLE2.1$state)
-which(SAMPLE2.1$state == "PR")
-SAMPLE2.1 <- SAMPLE2.1[-c(39994, 75757 ,86137, 70289), -c(1, 2, 3, 4)]
-
 #Create new dataframe called SAMPLE3 so that we can manipulate Resp datatype  
-SAMPLE3 <- SAMPLE2.1
+SAMPLE3 <- SAMPLE2
 levels(SAMPLE3$Resp) <- c("No", "Yes")
 
 #Split our data into a TRAIN sample of 10000 rows and a HOLDOUT with the rest
-train.rows <- sample(nrow(SAMPLE3),10000)
+set.seed(178); train.rows <- sample(nrow(SAMPLE3),0.8 * nrow(SAMPLE3))
 TRAIN <- SAMPLE3[train.rows,]
 HOLDOUT <- SAMPLE3[-train.rows,]
-
-fitcontrol <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
-
-
-LRM <- train(Resp~., data=TRAIN, method="glm",
-               trControl=fitcontrol,preProc=c("center", "scale"))
+```
 
 
-summary(LRM)
-LRM$results[rownames(LRM$bestTune),]
-#ROC value is between .9 and 1, at .9541, indicating a very large area under the curve.
+Logistic Regression Model - Option 2
+```{r}
+fitControl <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
 
-varImp(LRM)
-plot(varImp(LRM), top =10, xlim = c(0,100), main = "Variable Importance for LRM")
-#Looks like sepoct is the bes predictor followed by fall_flag and julyaug
+
+set.seed(178); MODEL2 <- train(Resp~., data=TRAIN, method="glm",
+               trControl=fitControl,preProc=c("center", "scale"))
+
+
+summary(MODEL2)
+MODEL2$results[rownames(MODEL2$bestTune),]
+#ROC value is between .9 and 1, at about .96, indicating a very large area under the curve.
+
+varImp(MODEL2)
+plot(varImp(MODEL2), top =10, xlim = c(0,100), main = "Variable Importance for MODEL2")
+#Looks like sepoct is the best predictor followed by fall_flag and julyaug
 
 ```
 
 
-
 Decision Tree Model
 ```{r}
+fitControl <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
 
+rpartGrid <- expand.grid(cp=10^seq(-3,-1,length=20))  #Set up grid of CPs to use
+
+set.seed(178); TREE <- train(Resp~.,data=TRAIN,method="rpart",trControl=fitControl,
+                             tuneGrid=rpartGrid,preProc=c("center", "scale"))
+
+plot(TREE,ylab="Generalization Accuracy")
+
+TREE$results[rownames(TREE$bestTune),]
+
+varImp(TREE)
+
+# The decision tree model has an AUC of about 0.92 which is almost as good as our logistic regression model. The most significant predictors are sepoct, Q4, and item_12. The optimal value of the "cp" parameter is 0.001. 
 ```
 
