@@ -1,0 +1,228 @@
+---
+title: "Milestone 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in the sample, load packages
+```{r cars}
+SAMPLE <- read.csv("9.13 C9 Random Sample v1.91.csv")
+library(dplyr)
+library(caret)
+library(regclass)
+library(missForest) 
+
+```
+
+
+Binning Pt. 1
+```{r binning, echo=FALSE}
+
+
+ProdCatB_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatB)) {
+  if (is.na(SAMPLE$ProdCatB[i])) {ProdCatB_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatB[i] <= 100) {ProdCatB_Bin[i] <- 1}
+   if (SAMPLE$ProdCatB[i] > 100) {ProdCatB_Bin[i] <- 2} }
+}
+
+
+ProdCatC_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatC)) {
+  if (is.na(SAMPLE$ProdCatC[i])) {ProdCatC_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatC[i] <= 100) {ProdCatC_Bin[i] <- 1}
+   if (SAMPLE$ProdCatC[i] > 100) {ProdCatC_Bin[i] <- 2} }
+}
+
+ProdCatB_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatB)) {
+  if (is.na(SAMPLE$ProdCatB[i])) {ProdCatB_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatB[i] <= 100) {ProdCatB_Bin[i] <- 1}
+   if (SAMPLE$ProdCatB[i] > 100) {ProdCatB_Bin[i] <- 2} }
+}
+
+ProdCatD_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatD)) {
+  if (is.na(SAMPLE$ProdCatD[i])) {ProdCatD_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatD[i] <= 100) {ProdCatD_Bin[i] <- 1}
+   if (SAMPLE$ProdCatD[i] > 100) {ProdCatD_Bin[i] <- 2} }
+}
+
+
+ProdCatE_Bin <- c()
+for (i in 1:length(SAMPLE$ProdCatE)) {
+  if (is.na(SAMPLE$ProdCatE[i])) {ProdCatE_Bin[i] <- 0} else {
+   if (SAMPLE$ProdCatE[i] <= 100) {ProdCatE_Bin[i] <- 1}
+   if (SAMPLE$ProdCatE[i] > 100) {ProdCatE_Bin[i] <- 2} }
+}
+
+canordersBin <- c()
+for (i in 1:length(SAMPLE$canorders)) {
+  if (SAMPLE$canorders[i] == 0) {canordersBin[i] <- 0} else {
+   canordersBin[i] <- 1 }
+}
+
+webuseBin <- c()
+for (i in 1:length(SAMPLE$WebUse)) {
+  if (SAMPLE$WebUse[i] == 0 | is.na(SAMPLE$WebUse[i])) {webuseBin[i] <- 0} else {
+   webuseBin[i] <- 1 }
+}
+
+SAMPLE <- cbind(SAMPLE, ProdCatB_Bin, ProdCatC_Bin, ProdCatD_Bin, ProdCatE_Bin, canordersBin, webuseBin)
+
+SAMPLE <- subset(SAMPLE, select = -c(ProdCatB, ProdCatC, ProdCatD, ProdCatE, WebUse, canorders) )
+```
+
+Binning pt.2
+```{r}
+LastMailBins <- c()
+for (i in 1:length(SAMPLE$LastMail)) {
+  if (is.na(SAMPLE$LastMail[i])) {LastMailBins[i] <- 6} else {
+   if (SAMPLE$LastMail[i] <= 6) {LastMailBins[i] <- 1}
+   if (SAMPLE$LastMail[i] <= 12) {LastMailBins[i] <- 2}
+     if (SAMPLE$LastMail[i] <= 18) {LastMailBins[i] <- 3} 
+     if (SAMPLE$LastMail[i] <= 24) {LastMailBins[i] <- 4} 
+     if (SAMPLE$LastMail[i] <= 30) {LastMailBins[i] <- 5} }
+}
+
+monthfrstordbin <- c()
+for (i in 1:length(SAMPLE$monthfrstord)) {
+  if (is.na(SAMPLE$monthfrstord[i])) {monthfrstordbin[i] <- 6} else {
+   if (SAMPLE$monthfrstord[i] <= 6) {monthfrstordbin[i] <- 1}
+   if (SAMPLE$monthfrstord[i] <= 12) {monthfrstordbin[i] <- 2}
+     if (SAMPLE$monthfrstord[i] <= 18) {monthfrstordbin[i] <- 3} 
+     if (SAMPLE$monthfrstord[i] <= 24) {monthfrstordbin[i] <- 4} 
+     if (SAMPLE$monthfrstord[i] <= 30) {monthfrstordbin[i] <- 5} }
+}
+
+monthlastordbin <- c()
+for (i in 1:length(SAMPLE$monthlastord)) {
+  if (is.na(SAMPLE$monthlastord[i])) {monthlastordbin[i] <- 6} else {
+   if (SAMPLE$monthlastord[i] <= 6) {monthlastordbin[i] <- 1}
+   if (SAMPLE$monthlastord[i] <= 12) {monthlastordbin[i] <- 2}
+     if (SAMPLE$monthlastord[i] <= 18) {monthlastordbin[i] <- 3} 
+     if (SAMPLE$monthlastord[i] <= 24) {monthlastordbin[i] <- 4} 
+     if (SAMPLE$monthlastord[i] <= 30) {monthlastordbin[i] <- 5} }
+}
+
+SAMPLE <- cbind(SAMPLE, LastMailBins, monthfrstordbin, monthlastordbin)
+
+SAMPLE <- subset(SAMPLE, select = -c(LastMail, monthfrstord, monthlastord) )
+
+SAMPLE <- subset(SAMPLE, select = -c(Demo, offdolr_12, offord_24, Oth1Dolr, Oth2Dolr, Oth3Dolr, Oth4Dolr, PurcPower, TotPurch, webdolr) )
+```
+
+Exclude Rows With Outliers
+```{r}
+RowsWithOutliers <- SAMPLE[c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+
+
+SAMPLE2.1 <- SAMPLE[-c(1:48, 20069, 10031, 56477, 21624, 28370, 12476, 53592, 76806, 63697, 93039, 92680, 44048, 41182),]
+```
+
+Random Forest Imputation for Age
+```{r}
+library(missForest)
+SAMPLE.MISSFORESTTEST <- data.frame(SAMPLE2.1$Age,SAMPLE2.1$Age1,SAMPLE2.1$Age2,SAMPLE2.1$Age3)
+SAMPLE.MISSFOREST <- missForest(SAMPLE.MISSFORESTTEST)
+
+newdata <- SAMPLE.MISSFOREST$ximp
+
+SAMPLE2.1$FinalAge <- newdata$SAMPLE2.1.Age
+SAMPLE2.1$FinalAge <- as.integer(SAMPLE2.1$FinalAge)
+
+```
+
+Split the data into training and holdout samples (80/20 split)
+```{r}
+train.rows <- sample
+```
+
+
+Logistic Regression Model - Option 1
+```{r}
+
+#Exclude Rows with zero variance and columns that were used to impute FinalAge
+table(SAMPLE2.1$AgeCode)
+which(SAMPLE2.1$AgeCode == "I")
+table(SAMPLE2.1$state)
+which(SAMPLE2.1$state == "PR")
+SAMPLE2.1 <- SAMPLE2.1[-c(39994, 75757 ,86137, 70289), -c(1, 2, 3, 4)]
+
+#Reassign Resp to be a factor so that the model will run
+SAMPLE2.1$Resp <- as.factor(SAMPLE2.1$Resp)
+
+#Naive model will predict the customer will not order
+table(SAMPLE2.1$Resp)
+
+#Run logistic regression model 
+MODEL <- train(Resp~.,data=SAMPLE2.1,method="glm",trControl=trainControl(method="none"))
+summary(MODEL)
+
+#The actual data
+ACTUAL <- SAMPLE2.1$Resp 
+
+#Our predictions of customers who will order based on our model
+PREDICTIONS <- predict(MODEL,newdata=SAMPLE2.1,type="prob")$"1"
+
+#This curve deviates significantly from the diagonal, indicating it is a very strong model
+plot( roc(ACTUAL,PREDICTIONS),xlab="True Negative Rate", ylab="True Positive Rate", xlim=c(1,0), ylim=c(0,1) )
+
+#The AUC is 0.85. If we picked a customer who has ordered at random and a women
+#who has not ordered at random, the model has an 96% chance of giving the
+#customer who ordered a higher score than the one who didn't.
+roc(ACTUAL,PREDICTIONS)$auc
+
+```
+
+
+
+Logistic Regression Model - Option 2
+```{r}
+#Prework
+library(caret)
+library(gbm)
+
+#Exclude rows with zero variance and columns that were used to impute FinalAge
+table(SAMPLE2.1$AgeCode)
+which(SAMPLE2.1$AgeCode == "I")
+table(SAMPLE2.1$state)
+which(SAMPLE2.1$state == "PR")
+SAMPLE2.1 <- SAMPLE2.1[-c(39994, 75757 ,86137, 70289), -c(1, 2, 3, 4)]
+
+#Create new dataframe called SAMPLE3 so that we can manipulate Resp datatype  
+SAMPLE3 <- SAMPLE2.1
+levels(SAMPLE3$Resp) <- c("No", "Yes")
+
+#Split our data into a TRAIN sample of 10000 rows and a HOLDOUT with the rest
+train.rows <- sample(nrow(SAMPLE3),10000)
+TRAIN <- SAMPLE3[train.rows,]
+HOLDOUT <- SAMPLE3[-train.rows,]
+
+fitcontrol <- trainControl(method="cv", number = 5, classProbs=TRUE, summaryFunction = twoClassSummary)
+
+
+LRM <- train(Resp~., data=TRAIN, method="glm",
+               trControl=fitcontrol,preProc=c("center", "scale"))
+
+
+summary(LRM)
+LRM$results[rownames(LRM$bestTune),]
+#ROC value is between .9 and 1, at .9541, indicating a very large area under the curve.
+
+varImp(LRM)
+plot(varImp(LRM), top =10, xlim = c(0,100), main = "Variable Importance for LRM")
+#Looks like sepoct is the bes predictor followed by fall_flag and julyaug
+
+```
+
+
+
+Decision Tree Model
+```{r}
+
+```
+
